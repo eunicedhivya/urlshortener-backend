@@ -113,6 +113,13 @@ router.get("/verify-email", async function (request, response) {
   const userExists = await getUserByToken(token, DB_NAME, "users");
   if (userExists) {
     await activateAccount(token, DB_NAME, "users");
+    response.status(200).json({
+      message: "account activated",
+    });
+  } else {
+    response.status(400).json({
+      message: "account doesn't exist",
+    });
   }
 });
 
