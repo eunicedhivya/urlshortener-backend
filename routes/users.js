@@ -5,7 +5,13 @@ import client from "../db.js";
 import nodemailer from "nodemailer";
 import cryptoRandomString from "crypto-random-string";
 
-import { genPassword, createUser, checkUserExists } from "../helper/users.js";
+import {
+  genPassword,
+  createUser,
+  checkUserExists,
+  getUserByToken,
+  activateAccount,
+} from "../helper/users.js";
 
 // import { createUser, getUserByName } from "../helper.js";
 
@@ -31,7 +37,7 @@ router.post("/signup", async function (request, response) {
   //Check if User Exist and send error message if True
   const userExists = await checkUserExists(email, DB_NAME, "users");
   if (userExists) {
-    return response.status(403).send({ message: "Account already exists" });
+    return response.status(400).send({ message: "Account already exists" });
   }
 
   // Generate Encrypted Password
@@ -52,35 +58,50 @@ router.post("/signup", async function (request, response) {
   const result = await createUser(newUser, DB_NAME, "users");
   //   console.log("result", result);
 
-  //   const token = jwt.sign({ id: result.email }, process.env.SECRET_KEY, {
-  //     expiresIn: "1h",
-  //   });
-
-  const genVerifyURL = `${request.headers.host}/user/verify-email?${newUser.statusToken}`;
+  const genVerifyURL =
+    "http://" +
+    request.headers.host +
+    "/users/verify-email?token=" +
+    newUser.statusToken;
 
   const mailerOptions = {
     from: "URL Shortener App <dhivya.eunice@gmail.com>",
     to: newUser.email,
     subject: "URL Shortener App: Verify your email id",
-    html: `Thank you for registering with us. Please click on the following link to confirm you email and activate your account. <br> <a href="${genVerifyURL}" target="_blank">${genVerifyURL}</a>`,
+    html:
+      "Thank you for registering with us. Please click on the following link to confirm you email and activate your account. <br> <a href='" +
+      genVerifyURL +
+      "'target='_blank'>" +
+      genVerifyURL +
+      "</a>",
   };
 
   //   console.log(mailerOptions);
 
   transporter.sendMail(mailerOptions, function (error, info) {
     if (error) {
-      console.log(error);
+      //   console.log(error);
+      return response.status(400).send({ message: "Account already exists" });
     } else {
       console.log("verification email sent to ur registered email");
     }
   });
 
-  //   await mailerFunc(mailDetails);
-
   response.status(200).json({
-    message: "signup successful",
+    message:
+      "signup successful. verification email sent to ur registered email",
     user: newUser,
   });
+});
+
+router.get("/verify-email", async function (request, response) {
+  const token = request.query.token;
+  console.log(token);
+
+  const userExists = await getUserByToken(token, DB_NAME, "users");
+  if (userExists) {
+    await activateAccount(token, DB_NAME, "users");
+  }
 });
 
 router.post("/login", async function (request, response) {
