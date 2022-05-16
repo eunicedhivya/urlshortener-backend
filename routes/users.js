@@ -4,6 +4,8 @@ import jwt from "jsonwebtoken";
 import client from "../db.js";
 import nodemailer from "nodemailer";
 import cryptoRandomString from "crypto-random-string";
+import dotenv from "dotenv";
+dotenv.config();
 
 import {
   genPassword,
@@ -25,10 +27,20 @@ const transporter = nodemailer.createTransport({
   secure: false,
   requireTLS: true,
   auth: {
-    user: "dhivya.eunice@gmail.com",
-    pass: "tv9@12345",
+    user: process.env.MY_EMAIL_ID,
+    pass: process.env.MY_EMAIL_PASS,
   },
 });
+// const transporter = nodemailer.createTransport({
+//   host: "smtp.gmail.com",
+//   port: 587,
+//   secure: false,
+//   requireTLS: true,
+//   auth: {
+//     user: "dhivya.eunice@gmail.com",
+//     pass: "tv9@12345",
+//   },
+// });
 
 router.post("/signup", async function (request, response) {
   // Get the info from body
