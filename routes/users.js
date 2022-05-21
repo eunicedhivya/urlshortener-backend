@@ -13,6 +13,7 @@ import {
   checkUserExists,
   getUserByToken,
   activateAccount,
+  getUserByEmail,
 } from "../helper/users.js";
 
 // import { createUser, getUserByName } from "../helper.js";

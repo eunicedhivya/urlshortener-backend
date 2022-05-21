@@ -6,6 +6,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import client from "./db.js";
 import { usersRouter } from "./routes/users.js";
+import { passwordResetRouter } from "./routes/passwordreset.js";
 
 dotenv.config();
 // console.log(process.env.MONGO_URL);
@@ -27,5 +28,6 @@ app.get("/", (request, response) => {
 });
 
 app.use("/users", usersRouter);
+app.use("/password-reset", passwordResetRouter);
 
 app.listen(PORT, () => console.log("Server is started in " + PORT));

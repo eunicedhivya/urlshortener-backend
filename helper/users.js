@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import client from "../db.js";
+import { ObjectId } from "mongodb";
 
 async function genPassword(password) {
   const salt = await bcrypt.genSalt(10);
@@ -23,6 +24,21 @@ async function getUserByToken(token, dbName, colName) {
     .collection(colName)
     .findOne({ statusToken: token });
 }
+async function getUserById(userid, dbName, colName) {
+  return await client
+    .db(dbName)
+    .collection(colName)
+    .findOne({ _id: ObjectId(userid) });
+}
+async function getUserByEmail(email, dbName, colName) {
+  return await client.db(dbName).collection(colName).findOne({ email: email });
+}
+async function addToken(email, genRandomCode, dbName, colName) {
+  return await client
+    .db(dbName)
+    .collection(colName)
+    .updateOne({ email: email }, { $set: { token: genRandomCode } });
+}
 async function activateAccount(token, dbName, colName) {
   //   await client
   //     .db(dbName)
@@ -38,6 +54,18 @@ async function activateAccount(token, dbName, colName) {
       }
     );
 }
+async function changePassword(hashedPassword, userid, dbName, colName) {
+  await client
+    .db(dbName)
+    .collection(colName)
+    .updateOne(
+      { _id: ObjectId(userid) },
+      {
+        $set: { password: hashedPassword },
+        $unset: { token: "" },
+      }
+    );
+}
 
 export {
   genPassword,
@@ -45,4 +73,8 @@ export {
   checkUserExists,
   getUserByToken,
   activateAccount,
+  getUserByEmail,
+  addToken,
+  getUserById,
+  changePassword,
 };
