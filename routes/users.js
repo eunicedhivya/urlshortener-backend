@@ -142,6 +142,9 @@ router.post("/login", async function (request, response) {
       response.status(401).send({ message: "Invalid Credentials" });
     } else {
       const token = jwt.sign({ id: userFromDB._id }, process.env.SECRET_KEY);
+      response.cookie("secureCookie", token, {
+        httpOnly: true,
+      });
       response.send({ message: "Login Successful", token: token });
     }
   }

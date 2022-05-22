@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import cookieParser from "cookie-parser";
 import client from "./db.js";
 import { usersRouter } from "./routes/users.js";
 import { passwordResetRouter } from "./routes/passwordreset.js";
@@ -15,6 +16,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 
 // Port for localhost
 const PORT = process.env.PORT;
