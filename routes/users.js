@@ -125,38 +125,26 @@ router.get("/verify-email", async function (request, response) {
 });
 
 router.post("/login", async function (request, response) {
-  const { username, password } = request.body;
+  const { email, password } = request.body;
 
-  //
-  //   // check if user is present in DB
-  //   //   db.users.findOne({username: "Harry"})
+  // check if user is present in DB
+  const userFromDB = await getUserByEmail(email, DB_NAME, "users");
 
-  //   const userFromDB = await getUserByName(username);
+  const hashedPassword = await genPassword(password);
 
-  //   console.log(userFromDB);
+  if (!userFromDB) {
+    response.status(401).send({ message: "Invalid Credentials" });
+  } else {
+    const storedPassword = userFromDB.password;
+    const isPasswordMatch = await bcrypt.compare(password, storedPassword);
 
-  //   //   const hashedPassword = await genPassword(password);
-  //   //   const newUser = {
-  //   //     username: username,
-  //   //     password: hashedPassword,
-  //   //   };
-  //   //   // console.log(newMovie);
-  //   //   //   db.users.insertOne(newUser)
-  //   //   const result = await createUser(newUser);
-  //   //   userFromDB ? response.send(userFromDB) : response.send("Invalid Credentials");
-  //   if (!userFromDB) {
-  //     response.status(401).send({ message: "Invalid Credentials" });
-  //   } else {
-  //     const storedPassword = userFromDB.password;
-  //     const isPasswordMatch = await bcrypt.compare(password, storedPassword);
-
-  //     if (!isPasswordMatch) {
-  //       response.status(401).send({ message: "Invalid Credentials" });
-  //     } else {
-  //       const token = jwt.sign({ id: userFromDB._id }, process.env.SECRET_KEY);
-  //       response.send({ message: "Login Successful", token: token });
-  //     }
-  //   }
+    if (!isPasswordMatch) {
+      response.status(401).send({ message: "Invalid Credentials" });
+    } else {
+      const token = jwt.sign({ id: userFromDB._id }, process.env.SECRET_KEY);
+      response.send({ message: "Login Successful", token: token });
+    }
+  }
 });
 
 export const usersRouter = router;
