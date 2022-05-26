@@ -23,6 +23,12 @@ app.use(
 
 app.use(express.json());
 app.use(cookieParser());
+app.use(
+  session({
+    proxy: true,
+    cookie: { sameSite: "none" },
+  })
+);
 
 // Port for localhost
 const PORT = process.env.PORT;
