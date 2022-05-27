@@ -6,6 +6,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
 import client from "./db.js";
+import session from "express-session";
 import { usersRouter } from "./routes/users.js";
 import { passwordResetRouter } from "./routes/passwordreset.js";
 
@@ -21,13 +22,20 @@ app.use(
   })
 );
 
-// app.use((req, res, next) => {
-//   res.header({ "Access-Control-Allow-Origin": "*" });
-//   next();
-// });
+app.set("trust proxy", 1);
 
 app.use(express.json());
 app.use(cookieParser());
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    cookie: {
+      sameSite: "none",
+      secure: true,
+    },
+  })
+);
 
 // Port for localhost
 const PORT = process.env.PORT;
