@@ -6,7 +6,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
 import client from "./db.js";
-import session from "express-session";
+// import session from "express-session";
 import { usersRouter } from "./routes/users.js";
 import { passwordResetRouter } from "./routes/passwordreset.js";
 
@@ -27,16 +27,16 @@ app.set("trust proxy", 1);
 app.use(express.json());
 app.use(cookieParser());
 
-app.use(
-  session({
-    cookie: {
-      sameSite: "none",
-      secure: true,
-      resave: true,
-      saveUninitialized: true,
-    },
-  })
-);
+// app.use(
+//   session({
+//     cookie: {
+//       sameSite: "none",
+//       secure: true,
+//       resave: true,
+//       saveUninitialized: true,
+//     },
+//   })
+// );
 
 // Port for localhost
 const PORT = process.env.PORT;
