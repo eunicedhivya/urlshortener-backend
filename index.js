@@ -29,7 +29,6 @@ app.use(cookieParser());
 
 app.use(
   session({
-    secret: process.env.SESSION_SECRET,
     cookie: {
       sameSite: "none",
       secure: true,
