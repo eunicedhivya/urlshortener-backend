@@ -5,6 +5,8 @@ import client from "../db.js";
 import nodemailer from "nodemailer";
 import cryptoRandomString from "crypto-random-string";
 import dotenv from "dotenv";
+import auth from "../middleware/auth.js";
+import { ObjectId } from "mongodb";
 dotenv.config();
 
 import {
@@ -14,6 +16,7 @@ import {
   getUserByToken,
   activateAccount,
   getUserByEmail,
+  // getMyInfo,
 } from "../helper/users.js";
 
 // import { createUser, getUserByName } from "../helper.js";
@@ -115,28 +118,183 @@ router.get("/verify-email", async function (request, response) {
 });
 
 router.post("/login", async function (request, response) {
-  const { email, password } = request.body;
+  try {
+    const { email, password } = request.body;
 
-  // check if user is present in DB
-  const userFromDB = await getUserByEmail(email, DB_NAME, "users");
+    // Check if email/password is entered
+    if (!email || !password)
+      return response
+        .status(400)
+        .json({ errorMessage: "Please enter all required fields." });
 
-  const hashedPassword = await genPassword(password);
+    // check if user is present in DB
+    const userFromDB = await getUserByEmail(email, DB_NAME, "users");
 
-  if (!userFromDB) {
-    response.status(401).send({ message: "Invalid Credentials" });
-  } else {
-    const storedPassword = userFromDB.password;
-    const isPasswordMatch = await bcrypt.compare(password, storedPassword);
+    // const hashedPassword = await genPassword(password);
 
-    if (!isPasswordMatch) {
-      response.status(401).send({ message: "Invalid Credentials" });
+    if (!userFromDB) {
+      response.status(401).json({ message: "Invalid Credentials" });
     } else {
-      const token = jwt.sign({ id: userFromDB._id }, process.env.SECRET_KEY);
-      response.cookie("secureCookie", token, {
-        httpOnly: true,
-      });
-      response.send({ message: "Login Successful", token: token });
+      const storedPassword = userFromDB.password;
+      const isPasswordMatch = await bcrypt.compare(password, storedPassword);
+
+      if (userFromDB.status === "pending") {
+        response.status(401).json({ message: "Account not activated yet" });
+      }
+
+      if (!isPasswordMatch) {
+        response.status(401).json({ message: "Invalid Credentials" });
+      } else {
+        const token = jwt.sign({ id: userFromDB._id }, process.env.SECRET_KEY);
+        response.cookie("token", token, {
+          expiresIn: "1d",
+          httpOnly: true,
+          secure: true,
+          sameSite: "none",
+        });
+        response.json({ message: "Login Successful", id: userFromDB._id });
+      }
     }
+  } catch (err) {
+    console.log(err);
+    response.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+router.post("/logout", (request, response) => {
+  try {
+    response
+      .cookie("token", token, {
+        expires: Date.now(),
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+      })
+      .json("cookie cleared");
+  } catch (err) {
+    console.error(err);
+    request.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+router.get("/me", auth, async function (request, response) {
+  try {
+    const token = request.cookies.token;
+    // if (!token) {
+    //   return response.json(false);
+    // }
+    const decoded = jwt.decode(token, process.env.SECRET_KEY);
+    // const myInfo = await getMyInfo(decoded.id, DB_NAME, "users");
+    // console.log(token);
+
+    const myInfo = await client
+      .db(DB_NAME)
+      .collection("users")
+      .findOne({ _id: ObjectId(decoded.id) });
+
+    response.json(myInfo);
+    // console.log(token);
+
+    // jwt.verify(token, process.env.SECRET_KEY);
+
+    // response.send(true);
+  } catch (err) {
+    response.json(false);
+  }
+});
+
+router.post("/create", auth, async function (request, response) {
+  try {
+    const { longUrl } = request.body;
+    const token = request.cookies.token;
+
+    const decoded = jwt.decode(token, process.env.SECRET_KEY);
+    // console.log(decoded);
+    // Generate Encrypted Password
+    // const hashedPassword = await genPassword(password);
+    const genRandomCode = cryptoRandomString({ length: 10, type: "url-safe" });
+
+    const shortUrl = genRandomCode;
+
+    //Form User Object for adding to DB
+    const newShortLink = {
+      userid: decoded.id,
+      longUrl: longUrl,
+      shortUrl: shortUrl,
+    };
+
+    console.log(newShortLink);
+
+    const myInfo = await client
+      .db(DB_NAME)
+      .collection("shortlinks")
+      .insertOne(newShortLink);
+
+    response.status(200).json({
+      message: "shortlink created",
+      msgType: "success",
+      shortUrl: "http://" + request.headers.host + "/" + shortUrl,
+    });
+  } catch (err) {
+    response
+      .status(500)
+      .json({ message: "Internal Server Error", msgType: "fail" });
+  }
+
+  //   db.users.insertOne(newUser)
+  // const result = await createUser(newUser, DB_NAME, "users");
+  //   console.log("result", result);
+
+  // const genVerifyURL =
+  //   "http://" +
+  //   request.headers.host +
+  //   "/users/verify-email?token=" +
+  //   newUser.statusToken;
+
+  // const mailerOptions = {
+  //   from: "URL Shortener App <dhivya.eunice@gmail.com>",
+  //   to: newUser.email,
+  //   subject: "URL Shortener App: Verify your email id",
+  //   html:
+  //     "Thank you for registering with us. Please click on the following link to confirm you email and activate your account. <br> <a href='" +
+  //     genVerifyURL +
+  //     "'target='_blank'>" +
+  //     genVerifyURL +
+  //     "</a>",
+  // };
+
+  // //   console.log(mailerOptions);
+
+  // transporter.sendMail(mailerOptions, function (error, info) {
+  //   if (error) {
+  //     //   console.log(error);
+  //     return response.status(400).send({ message: "Account already exists" });
+  //   } else {
+  //     console.log("verification email sent to ur registered email");
+  //   }
+  // });
+
+  // response.status(200).json({
+  //   message:
+  //     "signup successful. verification email sent to ur registered email",
+  //   user: newUser,
+  // });
+});
+
+router.get("/loggedIn", (request, response) => {
+  try {
+    const token = request.cookies.token;
+    if (!token) {
+      return response.json(false);
+    }
+
+    // console.log(token);
+
+    jwt.verify(token, process.env.SECRET_KEY);
+
+    response.send(true);
+  } catch (err) {
+    response.json(false);
   }
 });
 

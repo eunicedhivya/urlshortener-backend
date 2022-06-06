@@ -30,6 +30,12 @@ async function getUserById(userid, dbName, colName) {
     .collection(colName)
     .findOne({ _id: ObjectId(userid) });
 }
+async function getMyInfo(userid, dbName, colName) {
+  return await client
+    .db(dbName)
+    .collection(colName)
+    .findOne({ _id: ObjectId(userid) });
+}
 async function getUserByEmail(email, dbName, colName) {
   return await client.db(dbName).collection(colName).findOne({ email: email });
 }
@@ -77,4 +83,5 @@ export {
   addToken,
   getUserById,
   changePassword,
+  getMyInfo,
 };
