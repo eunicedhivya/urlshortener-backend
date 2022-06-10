@@ -160,17 +160,18 @@ router.post("/login", async function (request, response) {
           .json({ message: "Invalid Credentials", msgType: "error" });
       } else {
         const token = jwt.sign({ id: userFromDB._id }, process.env.SECRET_KEY);
-        response.cookie("token", token, {
-          expiresIn: "1d",
-          httpOnly: true,
-          secure: true,
-          sameSite: "none",
-        });
-        response.setHeader("x-auth-token", token);
+        // response.cookie("token", token, {
+        //   expiresIn: "1d",
+        //   httpOnly: true,
+        //   secure: true,
+        //   sameSite: "none",
+        // });
+        // response.setHeader("x-auth-token", token);
         response.json({
           message: "Login Successful",
           id: userFromDB._id,
           msgType: "success",
+          token: token,
         });
       }
     }
