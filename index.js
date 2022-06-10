@@ -18,7 +18,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: process.env.FRONTEND,
+    origin: [process.env.FRONTEND, "https://urlshortener-clone.herokuapp.com"],
     credentials: true,
   })
 );
