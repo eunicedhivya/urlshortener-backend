@@ -75,50 +75,62 @@ router.post("/", async function (request, response) {
         .send({ message: "Password reset sent not sent" });
     } else {
       return response.status(200).json({
-        message: "Password reset email sent to ur registered email",
+        message: "Password reset link sent to ur registered email",
       });
     }
   });
 });
 
-// Use EndPoint to reset password by using Userid (_id) and token
-// router.get("/:userid/:token", async function (request, response) {
-//   const { userid, token } = request.params;
-//   //   console.log(userid);
-//   //   console.log(token);
-//   const result = await getUserById(userid, DB_NAME, "users");
-//   console.log(result);
-//   if (!result)
-//     return response.status(400).send({ message: "The link is invalid" });
+// verify password reset link
+router.get("/:userid/:token", async function (request, response) {
+  try {
+    const user = await getUserById(request.params.userid, DB_NAME, "users");
 
-//   const usertoken = result.token;
-//   if (!usertoken)
-//     return response.status(400).send({ message: "The link is invalid" });
+    if (!user) return response.status(400).json({ message: "Invalid URL" });
 
-//   response.status(200).send("The link is valid");
-// });
+    console.log(user);
+
+    const token = user.token;
+    //   userId: user._id,
+    //   token: req.params.token,
+    // });
+    if (!token) return res.status(400).json({ message: "Invalid URL" });
+
+    response.redirect(
+      `${process.env.FRONTEND}/password-reset/${user._id}/${user.token}`
+    );
+    // response.status(200).json({ message: "Valid URL" });
+  } catch (error) {
+    response.status(500).json({ message: "Internal Server Error" });
+  }
+});
 
 router.post("/:userid/:token", async function (request, response) {
-  const { password } = request.body;
-  const { userid, token } = request.params;
-  console.log(userid);
-  console.log(token);
-  console.log(password);
-  const chosenUser = await getUserById(userid, DB_NAME, "users");
-  console.log(chosenUser.token === token);
-  if (chosenUser.token !== token)
-    return response.status(400).json({ message: "The Link is invalid" });
+  try {
+    const { password } = request.body;
+    const { userid, token } = request.params;
+    console.log("Password Reset Link Activated");
+    console.log(userid);
+    console.log(token);
+    console.log(password);
+    const chosenUser = await getUserById(userid, DB_NAME, "users");
+    // console.log(chosenUser.token === token);
+    if (chosenUser.token !== token)
+      return response.status(400).json({ message: "The Link is invalid" });
 
-  const hashedPassword = await genPassword(password);
+    const hashedPassword = await genPassword(password);
 
-  const editPassword = await changePassword(
-    hashedPassword,
-    userid,
-    DB_NAME,
-    "users"
-  );
+    const editPassword = await changePassword(
+      hashedPassword,
+      userid,
+      DB_NAME,
+      "users"
+    );
 
-  response.status(200).json({ message: "The Password has been updated" });
+    response.status(200).json({ message: "The Password has been updated" });
+  } catch (error) {
+    response.status(500).json({ message: "Internal Server Error" });
+  }
 });
 
 export const passwordResetRouter = router;

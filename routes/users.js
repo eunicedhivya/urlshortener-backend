@@ -43,7 +43,9 @@ router.post("/signup", async function (request, response) {
   //Check if User Exist and send error message if True
   const userExists = await checkUserExists(email, DB_NAME, "users");
   if (userExists) {
-    return response.status(400).send({ message: "Account already exists" });
+    return response
+      .status(400)
+      .send({ message: "Account already exists", msgType: "error" });
   }
 
   // Generate Encrypted Password
@@ -87,17 +89,22 @@ router.post("/signup", async function (request, response) {
   transporter.sendMail(mailerOptions, function (error, info) {
     if (error) {
       //   console.log(error);
-      return response.status(400).send({ message: "Account already exists" });
+      return response
+        .status(400)
+        .json({ message: "Account already exists", msgType: "error" });
     } else {
-      console.log("verification email sent to ur registered email");
+      return response.status(400).json({
+        message: "Verification mail sent to registered email",
+        msgType: "success",
+      });
     }
   });
 
-  response.status(200).json({
-    message:
-      "signup successful. verification email sent to ur registered email",
-    user: newUser,
-  });
+  // response.status(200).json({
+  //   message:
+  //     "signup successful. verification email sent to ur registered email",
+  //   user: newUser,
+  // });
 });
 
 router.get("/verify-email", async function (request, response) {
@@ -123,9 +130,10 @@ router.post("/login", async function (request, response) {
 
     // Check if email/password is entered
     if (!email || !password)
-      return response
-        .status(400)
-        .json({ errorMessage: "Please enter all required fields." });
+      return response.status(400).json({
+        message: "Please enter all required fields.",
+        msgType: "error",
+      });
 
     // check if user is present in DB
     const userFromDB = await getUserByEmail(email, DB_NAME, "users");
@@ -133,17 +141,23 @@ router.post("/login", async function (request, response) {
     // const hashedPassword = await genPassword(password);
 
     if (!userFromDB) {
-      response.status(401).json({ message: "Invalid Credentials" });
+      response
+        .status(401)
+        .json({ message: "Invalid Credentials", msgType: "error" });
     } else {
       const storedPassword = userFromDB.password;
       const isPasswordMatch = await bcrypt.compare(password, storedPassword);
 
       if (userFromDB.status === "pending") {
-        response.status(401).json({ message: "Account not activated yet" });
+        response
+          .status(401)
+          .json({ message: "Account not activated yet", msgType: "error" });
       }
 
       if (!isPasswordMatch) {
-        response.status(401).json({ message: "Invalid Credentials" });
+        response
+          .status(401)
+          .json({ message: "Invalid Credentials", msgType: "error" });
       } else {
         const token = jwt.sign({ id: userFromDB._id }, process.env.SECRET_KEY);
         response.cookie("token", token, {
@@ -152,7 +166,11 @@ router.post("/login", async function (request, response) {
           secure: true,
           sameSite: "none",
         });
-        response.json({ message: "Login Successful", id: userFromDB._id });
+        response.json({
+          message: "Login Successful",
+          id: userFromDB._id,
+          msgType: "success",
+        });
       }
     }
   } catch (err) {
@@ -161,19 +179,12 @@ router.post("/login", async function (request, response) {
   }
 });
 
-router.post("/logout", (request, response) => {
+router.get("/logout", (request, response) => {
   try {
-    response
-      .cookie("token", token, {
-        expires: Date.now(),
-        httpOnly: true,
-        secure: true,
-        sameSite: "none",
-      })
-      .json("cookie cleared");
+    response.clearCookie("token").status(200).json({ message: "Logged out" });
   } catch (err) {
     console.error(err);
-    request.status(500).json({ message: "Internal Server Error" });
+    response.status(500).json({ message: "Internal Server Error" });
   }
 });
 
@@ -183,6 +194,7 @@ router.get("/me", auth, async function (request, response) {
     // if (!token) {
     //   return response.json(false);
     // }
+
     const decoded = jwt.decode(token, process.env.SECRET_KEY);
     // const myInfo = await getMyInfo(decoded.id, DB_NAME, "users");
     // console.log(token);
@@ -279,6 +291,22 @@ router.post("/create", auth, async function (request, response) {
   //     "signup successful. verification email sent to ur registered email",
   //   user: newUser,
   // });
+});
+
+router.get("/links", async function (request, response) {
+  try {
+    const token = request.cookies.token;
+    const decoded = jwt.decode(token, process.env.SECRET_KEY);
+    const myInfo = await client
+      .db(DB_NAME)
+      .collection("shortlinks")
+      .find({ userid: decoded.id })
+      .toArray();
+
+    response.status(200).json(myInfo);
+  } catch (err) {
+    response.status(500).json({ message: "Internal Server Error" });
+  }
 });
 
 router.get("/loggedIn", (request, response) => {
