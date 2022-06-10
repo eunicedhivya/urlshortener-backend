@@ -166,6 +166,7 @@ router.post("/login", async function (request, response) {
           secure: true,
           sameSite: "none",
         });
+        response.setHeader("x-auth-token", token);
         response.json({
           message: "Login Successful",
           id: userFromDB._id,
