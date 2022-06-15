@@ -18,7 +18,11 @@ const app = express();
 
 app.use(
   cors({
-    origin: [process.env.FRONTEND, "https://urlshortener-clone.herokuapp.com"],
+    origin: [
+      process.env.FRONTEND,
+      "https://urlshortener-clone.herokuapp.com",
+      "https://fanciful-llama-37e407.netlify.app",
+    ],
     credentials: true,
   })
 );
