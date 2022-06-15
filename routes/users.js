@@ -324,9 +324,9 @@ router.post("/create", auth, async function (request, response) {
   // });
 });
 
-router.get("/links", async function (request, response) {
+router.post("/links", auth, async function (request, response) {
   try {
-    const token = request.cookies.token;
+    const token = request.body.token;
     const decoded = jwt.decode(token, process.env.SECRET_KEY);
     const myInfo = await client
       .db(DB_NAME)
