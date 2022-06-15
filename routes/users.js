@@ -340,14 +340,12 @@ router.get("/links", async function (request, response) {
   }
 });
 
-router.get("/loggedIn/:token", (request, response) => {
+router.post("/loggedIn", (request, response) => {
   try {
-    // const token = request.cookies.token;
+    const token = request.body.token;
     if (!token) {
       return response.json(false);
     }
-
-    console.log(request.params);
 
     jwt.verify(token, process.env.SECRET_KEY);
 
