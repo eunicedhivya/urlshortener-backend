@@ -248,13 +248,11 @@ router.post("/me", auth, async function (request, response) {
 
 router.post("/create", auth, async function (request, response) {
   try {
-    const { longUrl } = request.body;
-    const token = request.cookies.token;
+    const { longUrl, token } = request.body;
+    // const token = request.cookies.token;
+    console.log("create", longUrl, token);
 
     const decoded = jwt.decode(token, process.env.SECRET_KEY);
-    // console.log(decoded);
-    // Generate Encrypted Password
-    // const hashedPassword = await genPassword(password);
     const genRandomCode = cryptoRandomString({ length: 10, type: "url-safe" });
 
     const shortUrl = genRandomCode;
