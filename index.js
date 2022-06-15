@@ -66,6 +66,14 @@ app.get("/:shorturl", async function (request, response) {
       .collection("shortlinks")
       .findOne({ shortUrl: request.params.shorturl });
 
+    const myInfo2 = await client
+      .db(DB_NAME)
+      .collection("shortlinks")
+      .updateOne(
+        { shortUrl: request.params.shorturl },
+        { $inc: { clicks: 1 } }
+      );
+
     // Redirect to the Correct URL
     response.redirect(myInfo.longUrl);
   } catch (err) {

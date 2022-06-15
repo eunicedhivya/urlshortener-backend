@@ -262,6 +262,8 @@ router.post("/create", auth, async function (request, response) {
       userid: decoded.id,
       longUrl: longUrl,
       shortUrl: shortUrl,
+      timestamp: Date.now(),
+      clicks: 0,
     };
 
     console.log(newShortLink);
