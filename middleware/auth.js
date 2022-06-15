@@ -2,11 +2,12 @@ import jwt from "jsonwebtoken";
 
 function auth(request, response, next) {
   try {
-    const token = request.cookies.token;
+    // console.log("auth", request.body);
+    const token = request.body.token;
     if (!token)
       return response.status(401).json({ errorMessage: "Unauthorized" });
 
-    console.log("#token", token);
+    // console.log("#token", token);
 
     const verified = jwt.verify(token, process.env.SECRET_KEY);
     request.user = verified.user;

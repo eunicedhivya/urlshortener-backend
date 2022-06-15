@@ -190,24 +190,27 @@ router.get("/logout", (request, response) => {
   }
 });
 
-router.get("/me", auth, async function (request, response) {
+router.post("/me", auth, async function (request, response) {
   try {
-    const token = request.cookies.token;
-    // if (!token) {
-    //   return response.json(false);
-    // }
+    // const token = request.cookies.token;
+    const token = request.body.token;
+    if (!token) {
+      return response.json(false);
+    }
+
+    // console.log(request.body);
 
     const decoded = jwt.decode(token, process.env.SECRET_KEY);
     // const myInfo = await getMyInfo(decoded.id, DB_NAME, "users");
-    // console.log(token);
+    console.log(decoded);
 
     const myInfo = await client
       .db(DB_NAME)
       .collection("users")
       .findOne({ _id: ObjectId(decoded.id) });
 
-    response.json(myInfo);
-    // console.log(token);
+    console.log(myInfo);
+    response.status(200).json(myInfo);
 
     // jwt.verify(token, process.env.SECRET_KEY);
 
@@ -216,6 +219,32 @@ router.get("/me", auth, async function (request, response) {
     response.json(false);
   }
 });
+// router.get("/me", auth, async function (request, response) {
+//   try {
+//     const token = request.cookies.token;
+//     // if (!token) {
+//     //   return response.json(false);
+//     // }
+
+//     const decoded = jwt.decode(token, process.env.SECRET_KEY);
+//     // const myInfo = await getMyInfo(decoded.id, DB_NAME, "users");
+//     // console.log(token);
+
+//     const myInfo = await client
+//       .db(DB_NAME)
+//       .collection("users")
+//       .findOne({ _id: ObjectId(decoded.id) });
+
+//     response.json(myInfo);
+//     // console.log(token);
+
+//     // jwt.verify(token, process.env.SECRET_KEY);
+
+//     // response.send(true);
+//   } catch (err) {
+//     response.json(false);
+//   }
+// });
 
 router.post("/create", auth, async function (request, response) {
   try {
@@ -311,14 +340,14 @@ router.get("/links", async function (request, response) {
   }
 });
 
-router.get("/loggedIn", (request, response) => {
+router.get("/loggedIn/:token", (request, response) => {
   try {
-    const token = request.cookies.token;
+    // const token = request.cookies.token;
     if (!token) {
       return response.json(false);
     }
 
-    // console.log(token);
+    console.log(request.params);
 
     jwt.verify(token, process.env.SECRET_KEY);
 
@@ -327,5 +356,21 @@ router.get("/loggedIn", (request, response) => {
     response.json(false);
   }
 });
+// router.get("/loggedIn", (request, response) => {
+//   try {
+//     const token = request.cookies.token;
+//     if (!token) {
+//       return response.json(false);
+//     }
+
+//     // console.log(token);
+
+//     jwt.verify(token, process.env.SECRET_KEY);
+
+//     response.send(true);
+//   } catch (err) {
+//     response.json(false);
+//   }
+// });
 
 export const usersRouter = router;
