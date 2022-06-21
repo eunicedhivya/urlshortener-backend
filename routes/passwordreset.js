@@ -44,7 +44,7 @@ router.post("/", async function (request, response) {
   const result = await getUserByEmail(email, DB_NAME, "users");
 
   if (!result) {
-    return response.status(401).json({
+    return response.status(400).json({
       message: "No account exists under this email",
       msgType: "error",
     });
@@ -95,20 +95,26 @@ router.get("/:userid/:token", async function (request, response) {
   try {
     const user = await getUserById(request.params.userid, DB_NAME, "users");
 
-    if (!user) return response.status(400).json({ message: "Invalid URL" });
+    if (!user)
+      return response
+        .status(400)
+        .json({ message: "Invalid URL", msgType: "error" });
 
     console.log(user);
 
     const token = user.token;
 
-    if (!token) return res.status(400).json({ message: "Invalid URL" });
+    if (!token)
+      return res.status(400).json({ message: "Invalid URL", msgType: "error" });
 
     response.redirect(
       `${process.env.FRONTEND}/password-reset/${user._id}/${user.token}`
     );
     // response.status(200).json({ message: "Valid URL" });
   } catch (error) {
-    response.status(500).json({ message: "Internal Server Error" });
+    response
+      .status(500)
+      .json({ message: "Internal Server Error", msgType: "error" });
   }
 });
 
@@ -122,8 +128,16 @@ router.post("/:userid/:token", async function (request, response) {
     console.log(password);
     const chosenUser = await getUserById(userid, DB_NAME, "users");
     // console.log(chosenUser.token === token);
+
+    if (!chosenUser)
+      return response
+        .status(400)
+        .json({ message: "The Link is invalid", msgType: "error" });
+
     if (chosenUser.token !== token)
-      return response.status(400).json({ message: "The Link is invalid" });
+      return response
+        .status(400)
+        .json({ message: "The Link is invalid", msgType: "error" });
 
     const hashedPassword = await genPassword(password);
 
@@ -134,9 +148,13 @@ router.post("/:userid/:token", async function (request, response) {
       "users"
     );
 
-    response.status(200).json({ message: "The Password has been updated" });
+    response
+      .status(200)
+      .json({ message: "The Password has been updated", msgType: "success" });
   } catch (error) {
-    response.status(500).json({ message: "Internal Server Error" });
+    response
+      .status(500)
+      .json({ message: "Internal Server Error", msgType: "error" });
   }
 });
 
