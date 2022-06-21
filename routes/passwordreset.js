@@ -44,11 +44,10 @@ router.post("/", async function (request, response) {
   const result = await getUserByEmail(email, DB_NAME, "users");
 
   if (!result) {
-    response.status(401).json({
+    return response.status(401).json({
       message: "No account exists under this email",
       msgType: "error",
     });
-    return;
   }
   // console.log(result._id);
   const genRandomCode = cryptoRandomString({ length: 50, type: "url-safe" });
