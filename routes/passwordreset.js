@@ -40,8 +40,17 @@ const transporter = nodemailer.createTransport({
 // Use EndPoint to Send Reset EMail
 router.post("/", async function (request, response) {
   const { email } = request.body;
+
   const result = await getUserByEmail(email, DB_NAME, "users");
-  console.log(result._id);
+
+  if (!result) {
+    response.status(401).json({
+      message: "No account exists under this email",
+      msgType: "error",
+    });
+    return;
+  }
+  // console.log(result._id);
   const genRandomCode = cryptoRandomString({ length: 50, type: "url-safe" });
 
   const genURL =
@@ -59,9 +68,9 @@ router.post("/", async function (request, response) {
   const mailerOptions = {
     from: "URL Shortener App <dhivya.eunice@gmail.com>",
     to: result.email,
-    subject: "URL Shortener App: Verify your email id",
+    subject: "URL Shortener App: Reset your password",
     html:
-      "Thank you for registering with us. Please click on the following link to confirm you email and activate your account. <br> <a href='" +
+      "Please click on the following link the link to confirm your email and reset yout password. <br> <a href='" +
       genURL +
       "'target='_blank'>" +
       genURL +
@@ -72,10 +81,11 @@ router.post("/", async function (request, response) {
     if (error) {
       return response
         .status(400)
-        .send({ message: "Password reset sent not sent" });
+        .send({ message: "Password reset sent not sent", msgType: "error" });
     } else {
       return response.status(200).json({
         message: "Password reset link sent to ur registered email",
+        msgType: "success",
       });
     }
   });
@@ -91,9 +101,7 @@ router.get("/:userid/:token", async function (request, response) {
     console.log(user);
 
     const token = user.token;
-    //   userId: user._id,
-    //   token: req.params.token,
-    // });
+
     if (!token) return res.status(400).json({ message: "Invalid URL" });
 
     response.redirect(

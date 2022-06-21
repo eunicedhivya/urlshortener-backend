@@ -21,7 +21,7 @@ app.use(
     origin: [
       process.env.FRONTEND,
       "https://urlshortener-clone.herokuapp.com",
-      "https://fanciful-llama-37e407.netlify.app",
+      "http://localhost:3000",
     ],
     credentials: true,
   })
