@@ -25,6 +25,15 @@ const router = express.Router();
 
 const DB_NAME = "bitlyclone";
 
+function formatted_date() {
+  var result = "";
+  var d = new Date();
+  result += d.getFullYear() + "/" + (d.getMonth() + 1) + "/" + d.getDate();
+  return result;
+}
+
+// console.log(formatted_date());
+
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
@@ -209,7 +218,7 @@ router.post("/me", auth, async function (request, response) {
       .collection("users")
       .findOne({ _id: ObjectId(decoded.id) });
 
-    console.log(myInfo);
+    // console.log(myInfo);
     response.status(200).json(myInfo);
 
     // jwt.verify(token, process.env.SECRET_KEY);
@@ -253,20 +262,23 @@ router.post("/create", auth, async function (request, response) {
     console.log("create", longUrl, token);
 
     const decoded = jwt.decode(token, process.env.SECRET_KEY);
+
+    // console.log("token", token);
+    // console.log("longUrl", decoded);
     const genRandomCode = cryptoRandomString({ length: 10, type: "url-safe" });
 
     const shortUrl = genRandomCode;
 
-    //Form User Object for adding to DB
+    // //Form User Object for adding to DB
     const newShortLink = {
       userid: decoded.id,
       longUrl: longUrl,
       shortUrl: shortUrl,
-      timestamp: Date.now(),
+      timestamp: formatted_date(),
       clicks: 0,
     };
 
-    console.log(newShortLink);
+    // console.log(newShortLink);
 
     const myInfo = await client
       .db(DB_NAME)
@@ -324,6 +336,35 @@ router.post("/create", auth, async function (request, response) {
   // });
 });
 
+router.post("/datapoints", auth, async function (request, response) {
+  try {
+    const token = request.body.token;
+    const decoded = jwt.decode(token, process.env.SECRET_KEY);
+
+    console.log("datapoints", decoded);
+
+    const db1 = client.db(DB_NAME);
+    const coll = db1.collection("shortlinks");
+
+    const pipeline = [
+      { $match: { userid: decoded.id } },
+      { $group: { _id: "$timestamp", count: { $sum: 1 } } },
+    ];
+    const aggCursor = coll.aggregate(pipeline);
+
+    const list = [];
+    for await (const doc of aggCursor) {
+      list.push(doc);
+    }
+
+    console.log(list);
+
+    response.status(200).json(list);
+  } catch (err) {
+    response.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
 router.post("/links", auth, async function (request, response) {
   try {
     const token = request.body.token;
@@ -333,7 +374,7 @@ router.post("/links", auth, async function (request, response) {
       .collection("shortlinks")
       .find({ userid: decoded.id })
       .toArray();
-
+    // console.log("myInfo", myInfo);
     response.status(200).json(myInfo);
   } catch (err) {
     response.status(500).json({ message: "Internal Server Error" });
